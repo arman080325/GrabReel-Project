@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GrabReel – Instagram Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="wrapper">
+
+    <!-- NAV -->
+    <nav>
+      <div class="logo">
+        <div class="logo-icon">⬇</div>
+        Grab<span>Reel</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#">How it works</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+      <div class="nav-badge">Free &amp; No login</div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-pill">
+        <span class="hero-pill-dot">New</span>
+        Supports Reels, Posts &amp; Carousels
+      </div>
+
+      <h1>Download Instagram<br><em>content instantly</em></h1>
+      <p class="hero-sub">
+        Paste any Instagram reel or post link and download it in seconds.
+        No watermarks. No account needed. Full quality.
+      </p>
+
+      <!-- MAIN CARD -->
+      <div class="card">
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="setTab(this,'reel')">🎬 Reels</button>
+          <button class="tab" onclick="setTab(this,'post')">🖼 Posts</button>
+          <button class="tab" onclick="setTab(this,'story')">⭕ Stories</button>
+        </div>
+
+        <!-- Input -->
+        <div style="margin-top: 22px;">
+          <div class="input-row">
+            <div class="url-wrap">
+              <span class="url-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+              </span>
+              <input type="text" id="urlInput" placeholder="Paste Instagram URL here…" />
+              <button class="paste-btn" onclick="pasteFromClipboard()">Paste</button>
+            </div>
+            <button class="dl-btn" onclick="handleDownload()" id="mainBtn">
+              <span class="btn-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </span>
+              Download
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Fetching your content…</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error-box" id="errorBox">
+          <span class="error-icon">⚠️</span>
+          <div class="error-text">
+            <strong>Invalid URL</strong> — Please paste a valid Instagram post or reel link and try again.
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result" id="result">
+          <div class="result-preview">
+            <div class="preview-header">
+              <div class="preview-thumb" id="thumbWrap">🎬</div>
+              <div class="preview-info">
+                <div class="preview-title" id="previewTitle">Instagram Reel</div>
+                <div class="preview-meta">
+                  <span class="meta-tag">📺 Video</span>
+                  <span class="meta-tag">⏱ 0:30</span>
+                  <span class="meta-tag">✅ Ready</span>
+                </div>
+              </div>
+            </div>
+            <div class="quality-grid" id="qualityGrid">
+              <!-- quality options injected by app.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">2M<span>+</span></div>
+        <div class="stat-label">Downloads served</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0<span>s</span></div>
+        <div class="stat-label">Avg. wait time</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100<span>%</span></div>
+        <div class="stat-label">Free forever</div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how">
+      <p class="how-title">How it works</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-label"><strong>Copy Link</strong>Share → Copy link on Instagram</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-label"><strong>Paste URL</strong>Drop it in the box above</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-label"><strong>Click Download</strong>Pick quality &amp; save</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-label"><strong>Done!</strong>File saved to device</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">Lightning Fast</div>
+        <div class="feat-desc">Download in seconds with no delays or queues</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🎯</div>
+        <div class="feat-title">Full Quality</div>
+        <div class="feat-desc">Original resolution with no compression or watermarks</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔒</div>
+        <div class="feat-title">100% Private</div>
+        <div class="feat-desc">We don't store your links or download history</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📱</div>
+        <div class="feat-title">All Devices</div>
+        <div class="feat-desc">Works perfectly on mobile, tablet and desktop</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🖼</div>
+        <div class="feat-title">Carousels Too</div>
+        <div class="feat-desc">Download all images from multi-post carousels at once</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🎬</div>
+        <div class="feat-title">Reels &amp; Stories</div>
+        <div class="feat-desc">Supports reels, posts, and public story content</div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <strong>GrabReel</strong> — Built for productivity, not piracy. Please respect creator rights.<br>
+      <span style="margin-top:8px;display:block;">For personal use only &nbsp;·&nbsp; <a href="#">Privacy</a> &nbsp;·&nbsp; <a href="#">Terms</a></span>
+    </footer>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">✅</span>
+    <span id="toastMsg">Copied to clipboard!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
