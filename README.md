@@ -1,4 +1,4 @@
-# 📸 InstaDown — Instagram Reels & Posts Downloader
+# 📸 GrabReel — Instagram Reels & Posts Downloader
 
 > A full-stack web app to download Instagram Reels, Photos, and Carousel posts by simply pasting a URL.
 
