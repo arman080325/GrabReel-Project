@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════
-//  GrabReel – Frontend Logic
+//  GrabMedia – Frontend Logic
 // ═══════════════════════════════════════════════
 
 // Change this to your Render URL after deploying

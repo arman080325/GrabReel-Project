@@ -1,4 +1,4 @@
-# GrabReel – Backend
+# GrabMedia – Backend
 
 ## Setup
 
@@ -28,7 +28,7 @@
    - RAPIDAPI_KEY = your key
    - RAPIDAPI_HOST = instagram-api-media-downloader.p.rapidapi.com
    - FRONTEND_URL = https://your-frontend-domain.com
-6. Deploy — Render gives you a URL like https://grabreel-backend.onrender.com
+6. Deploy — Render gives you a URL like https://grabmedia-backend.onrender.com
 7. Update BACKEND_URL in your frontend app.js to that URL.
 
 ## API

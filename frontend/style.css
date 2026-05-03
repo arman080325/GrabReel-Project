@@ -1,23 +1,42 @@
 /* ═══════════════════════════════════════
-   GRABREEL v2 — Editorial Brutalist Style
+   GRABMEDIA v2 — Editorial Brutalist Style
    Bebas Neue + Space Grotesk + JetBrains Mono
    ═══════════════════════════════════════ */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg:       #0c0c0c;
-  --surface:  #141414;
-  --surface2: #1c1c1c;
-  --border:   #2a2a2a;
-  --border2:  #333;
-  --text:     #f5f5f0;
-  --muted:    #555;
-  --muted2:   #888;
-  --accent:   #ff3d00;
-  --accent2:  #ff6d00;
-  --green:    #00e676;
-  --mono:     'JetBrains Mono', monospace;
+  /* ── Accent (same in both modes) ── */
+  --accent:  #ff3d00;
+  --accent2: #ff6d00;
+  --green:   #00e676;
+  --mono:    'JetBrains Mono', monospace;
+
+  /* ── Default: DARK (night) ── */
+  --bg:      #0c0c0c;
+  --surface: #141414;
+  --surface2:#1c1c1c;
+  --border:  #2a2a2a;
+  --border2: #333;
+  --text:    #f5f5f0;
+  --muted:   #555;
+  --muted2:  #888;
+  --shadow:  rgba(0,0,0,0.5);
+  --mode-label: "🌙 NIGHT MODE";
+}
+
+/* ── LIGHT MODE (applied via JS based on time) ── */
+body.light-mode {
+  --bg:      #f5f3ee;
+  --surface: #ffffff;
+  --surface2:#f0ede6;
+  --border:  #d8d4cc;
+  --border2: #c8c4bc;
+  --text:    #1a1814;
+  --muted:   #9a9690;
+  --muted2:  #6a6660;
+  --shadow:  rgba(0,0,0,0.12);
+  --mode-label: "☀️ DAY MODE";
 }
 
 html { scroll-behavior: smooth; }
@@ -453,13 +472,37 @@ main {
 /* ── FOOTER ── */
 footer {
   position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-  gap: 12px; padding: 24px;
-  border-top: 1px solid var(--border);
-  font-family: var(--mono); font-size: 0.7rem; color: var(--muted);
-  letter-spacing: 0.5px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  padding: 48px 24px 40px;
+  margin-top: 64px;
+  background: var(--surface);
+  border-top: 1px solid var(--border2);
+  box-shadow: 0 -1px 0 0 var(--border), inset 0 1px 0 0 rgba(255,255,255,0.03);
+  font-family: var(--mono); font-size: 0.72rem;
+  color: var(--muted2); letter-spacing: 0.5px;
 }
-.footer-sep { color: var(--border2); }
+footer::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+}
+.footer-top-row {
+  display: flex; align-items: center; gap: 20px;
+  flex-wrap: wrap; justify-content: center;
+}
+.footer-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; letter-spacing: 3px;
+  color: var(--text);
+}
+.footer-brand em { color: var(--accent); font-style: normal; }
+.footer-sep { color: var(--border2); margin: 0 4px; }
+.footer-tagline {
+  font-size: 0.7rem; color: var(--muted);
+  text-align: center; line-height: 1.6;
+}
 
 /* ── TOAST ── */
 .toast {
@@ -563,3 +606,207 @@ body.ig-mode .media-type-badge { background: linear-gradient(90deg, #e1306c, #fd
   color: var(--muted2); padding: 2px 6px; letter-spacing: 0.5px;
 }
 .dl-no-audio { opacity: 0.6; }
+
+/* ══════════════════════════════════════
+   FOOTER CREDITS
+   ══════════════════════════════════════ */
+.footer-credits {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 0.8rem; color: var(--muted2);
+}
+.footer-made-by {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 10px 20px;
+  font-size: 0.82rem;
+}
+.footer-heart {
+  color: var(--accent);
+  display: inline-block;
+  font-size: 1rem;
+  animation: heartbeat 1.2s ease-in-out infinite;
+}
+@keyframes heartbeat {
+  0%,100% { transform: scale(1); }
+  14%     { transform: scale(1.4); }
+  28%     { transform: scale(1); }
+  42%     { transform: scale(1.25); }
+  56%     { transform: scale(1); }
+}
+.footer-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem; letter-spacing: 2px;
+  color: var(--text);
+}
+.footer-social {
+  display: flex; align-items: center; gap: 8px;
+}
+.social-link {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted2); text-decoration: none;
+  font-family: var(--mono); font-size: 0.75rem; font-weight: 500;
+  padding: 10px 20px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  transition: all 0.2s;
+  position: relative; overflow: hidden;
+  letter-spacing: 1px;
+}
+.social-link::before {
+  content: '';
+  position: absolute; inset: 0;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 0;
+}
+.social-link:hover { color: #fff; }
+.social-link span, .social-link svg { position: relative; z-index: 1; transition: color 0.2s; }
+.social-link.github::before  { background: #fff; }
+.social-link.github:hover    { color: #000; border-color: #fff; }
+.social-link.github:hover svg { color: #000; }
+.social-link.linkedin::before  { background: #0a66c2; }
+.social-link.linkedin:hover    { border-color: #0a66c2; }
+.social-link:hover::before { transform: translateX(0); }
+
+/* ═══════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   ═══════════════════════════════════════════ */
+
+/* BG grid lighter */
+body.light-mode .bg-grid {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+}
+body.light-mode .bg-vignette {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(200,190,180,0.4) 100%);
+}
+
+/* Nav */
+body.light-mode nav {
+  background: rgba(245,243,238,0.88);
+  border-bottom-color: var(--border);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+/* Input */
+body.light-mode input[type="text"] {
+  background: var(--surface);
+  border-color: var(--border2);
+  color: var(--text);
+}
+body.light-mode input[type="text"]:focus {
+  border-color: rgba(255,61,0,0.5);
+  box-shadow: 0 0 0 3px rgba(255,61,0,0.08);
+}
+
+/* Cards / surfaces */
+body.light-mode .result-panel,
+body.light-mode .stats-row,
+body.light-mode .how-section,
+body.light-mode .dl-item {
+  box-shadow: 0 2px 12px var(--shadow);
+}
+
+/* Download item hover */
+body.light-mode .dl-item:hover { border-color: var(--accent); }
+
+/* Cursor */
+body.light-mode .cursor { border-color: var(--accent); }
+body.light-mode .cursor-dot { background: var(--accent); }
+
+/* Footer */
+body.light-mode footer { background: var(--surface); }
+body.light-mode .social-link { background: var(--surface2); }
+
+/* Toast */
+body.light-mode .toast {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+/* Type tabs */
+body.light-mode .type-tab { background: var(--surface); }
+
+/* Loading bar stays vivid */
+body.light-mode .loading-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+  background-size: 200%;
+}
+
+/* How section numbers */
+body.light-mode .how-num { color: var(--border2); }
+
+/* ── MODE TOGGLE BUTTON ── */
+.mode-toggle {
+  position: fixed;
+  bottom: 28px; left: 28px;
+  z-index: 500;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  font-family: var(--mono); font-size: 0.68rem;
+  letter-spacing: 1px; padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+.mode-toggle:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.mode-toggle-icon { font-size: 1rem; transition: transform 0.5s; }
+.mode-toggle:hover .mode-toggle-icon { transform: rotate(20deg); }
+
+/* ── MODE TRANSITION ── */
+body {
+  transition:
+    background-color 0.8s ease,
+    color 0.8s ease;
+}
+body * {
+  transition:
+    background-color 0.6s ease,
+    border-color 0.6s ease,
+    color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+/* Don't transition transforms/animations */
+body .cursor,
+body .cursor-dot,
+body .blob-1,
+body .blob-2,
+body .blob-3,
+body .loading-fill,
+body .footer-heart,
+body .status-dot {
+  transition: none !important;
+}
+
+/* ── LIGHT MODE BLOBS ── */
+body.light-mode .blob-1 {
+  background: radial-gradient(circle, rgba(255,80,0,0.1) 0%, transparent 70%);
+}
+body.light-mode .blob-2 {
+  background: radial-gradient(circle, rgba(255,120,0,0.08) 0%, transparent 70%);
+}
+body.light-mode .blob-3 {
+  background: radial-gradient(circle, rgba(200,100,60,0.06) 0%, transparent 70%);
+}
+
+
+.time-banner-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+@media (max-width: 640px) {
+  .mode-toggle { bottom: 16px; left: 16px; padding: 8px 12px; font-size: 0.62rem; }
+}
