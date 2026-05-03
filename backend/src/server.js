@@ -351,3 +351,7 @@ app.listen(PORT, () => {
   console.log(`\nGrabReel server → http://localhost:${PORT}`);
   console.log(`Health check   → http://localhost:${PORT}/health\n`);
 });
+
+app.get('/', (req, res) => {
+  res.json({ status: 'GrabReel backend is running 🚀' });
+});
