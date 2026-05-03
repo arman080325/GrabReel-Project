@@ -2,7 +2,7 @@
 //  GrabReel v3 — Instagram + YouTube Downloader
 // ═══════════════════════════════════════════════
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'https://grabmedia-backend.onrender.com';
 let currentPlatform = 'instagram';
 
 // ── CURSOR ───────────────────────────────────────
