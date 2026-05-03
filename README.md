@@ -365,7 +365,7 @@ Distributed under the **MIT License** — see [`LICENSE`](LICENSE) for details.
 **Arman Ahemad Khan**
 
 [![GitHub](https://img.shields.io/badge/GitHub-arman080325-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/arman080325)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Arman%20Ahemad%20Khan-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/arman-ahemad-khan-045a71253)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Arman%20Ahemad%20Khan-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/arman-ahemad-khan-045a71253?utm_source=share_via&utm_content=profile&utm_medium=member_android)
 
 <br/>
 
