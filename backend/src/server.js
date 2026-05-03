@@ -454,6 +454,11 @@ app.get("/api/proxy", async (req, res) => {
   }
 });
 
+// ✅ Specific routes FIRST
+app.get('/', (req, res) => {
+  res.json({ status: 'GrabReel backend is running 🚀' });
+});
+
 // ── 404 & errors ──────────────────────────
 app.use((req, res) =>
   res
@@ -466,9 +471,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, error: "Internal server error." });
 });
 
-app.get("/", (req, res) => {
-  res.json({ status: "GrabReel backend is running 🚀" });
-});
 
 app.listen(PORT, () => {
   console.log(`\nGrabReel server → http://localhost:${PORT}`);
