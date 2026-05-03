@@ -6,8 +6,6 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const fetch = require("node-fetch");
-const https = require("https");
-const http = require("http");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,7 +21,8 @@ if (
 app.use(helmet());
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  "https://arman080325.github.io",   // hardcoded — always works
+  process.env.FRONTEND_URL,          // from Render env var
   "http://localhost:5500",
   "http://127.0.0.1:5500",
   "http://localhost:3000",
@@ -34,6 +33,7 @@ app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      console.warn("[CORS blocked]", origin);
       cb(new Error("CORS blocked: " + origin));
     },
     methods: ["GET", "POST"],
@@ -79,9 +79,7 @@ function isValidInstagramUrl(url) {
 }
 
 function isValidYouTubeUrl(url) {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)[A-Za-z0-9_-]+/.test(
-    url,
-  );
+  return /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)[A-Za-z0-9_-]+/.test(url);
 }
 
 function extractYouTubeId(url) {
@@ -153,7 +151,6 @@ function normalizeYouTube(apiData) {
   const duration = apiData.duration || null;
   const results = apiData.results;
 
-  // Find the best audio stream
   const audioStream =
     results.find((r) => r.mime === "audio/mp4" && r.quality === "M4A") ||
     results.find((r) => r.mime === "audio/mp4") ||
@@ -163,9 +160,7 @@ function normalizeYouTube(apiData) {
   const seen = new Set();
   const downloads = [];
 
-  // Build video+audio pairs — label clearly
   for (const q of priorityQualities) {
-    // Try to find a stream that already has audio
     const withAudio = results.find(
       (r) => r.quality === q && r.has_audio && r.mime === "video/mp4",
     );
@@ -183,7 +178,6 @@ function normalizeYouTube(apiData) {
       continue;
     }
 
-    // Pair video-only with audio stream
     const videoOnly = results.find(
       (r) => r.quality === q && !r.has_audio && r.mime === "video/mp4",
     );
@@ -191,7 +185,7 @@ function normalizeYouTube(apiData) {
       seen.add(q);
       downloads.push({
         quality: q,
-        label: `${q} · MP4 · Video + Audio`,
+        label: `${q} · Video only (download Audio separately)`,
         url: videoOnly.url,
         audioUrl: audioStream ? audioStream.url : null,
         ext: "mp4",
@@ -201,7 +195,6 @@ function normalizeYouTube(apiData) {
     }
   }
 
-  // Audio only
   if (audioStream) {
     downloads.push({
       quality: "M4A",
@@ -227,8 +220,15 @@ function normalizeYouTube(apiData) {
 }
 
 // ══════════════════════════════════════════
-//  HEALTH
+//  ROUTES (specific routes before 404)
 // ══════════════════════════════════════════
+
+// ── Root ──────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ status: "GrabReel backend is running 🚀" });
+});
+
+// ── Health ────────────────────────────────
 app.get("/health", (req, res) => {
   res.json({
     success: true,
@@ -237,9 +237,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ══════════════════════════════════════════
-//  INSTAGRAM
-// ══════════════════════════════════════════
+// ── Instagram ─────────────────────────────
 app.post("/api/download", dlLimiter, async (req, res) => {
   const { url } = req.body;
   if (!url || typeof url !== "string")
@@ -251,15 +249,11 @@ app.post("/api/download", dlLimiter, async (req, res) => {
     cleanUrl = `${p.origin}${p.pathname}`;
     if (!cleanUrl.endsWith("/")) cleanUrl += "/";
   } catch {
-    return res
-      .status(400)
-      .json({ success: false, error: "Invalid URL format." });
+    return res.status(400).json({ success: false, error: "Invalid URL format." });
   }
 
   if (!isValidInstagramUrl(cleanUrl))
-    return res
-      .status(400)
-      .json({ success: false, error: "Invalid Instagram URL." });
+    return res.status(400).json({ success: false, error: "Invalid Instagram URL." });
 
   const urlType = detectIGType(cleanUrl);
 
@@ -279,27 +273,16 @@ app.post("/api/download", dlLimiter, async (req, res) => {
 
     if (!r.ok) {
       if (r.status === 404)
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: "Media not found. Post may be private.",
-          });
+        return res.status(404).json({ success: false, error: "Media not found. Post may be private." });
       if (r.status === 429)
-        return res
-          .status(429)
-          .json({ success: false, error: "Rate limit reached." });
-      return res
-        .status(502)
-        .json({ success: false, error: `API error (${r.status}).` });
+        return res.status(429).json({ success: false, error: "Rate limit reached." });
+      return res.status(502).json({ success: false, error: `API error (${r.status}).` });
     }
 
     const data = JSON.parse(rawText);
     const normalized = normalizeInstagram(data, urlType);
     if (!normalized)
-      return res
-        .status(422)
-        .json({ success: false, error: "Could not extract media." });
+      return res.status(422).json({ success: false, error: "Could not extract media." });
 
     console.log(`[IG] ✅ ${normalized.downloads.length} file(s)`);
     return res.status(200).json({ success: true, ...normalized });
@@ -309,24 +292,18 @@ app.post("/api/download", dlLimiter, async (req, res) => {
   }
 });
 
-// ══════════════════════════════════════════
-//  YOUTUBE
-// ══════════════════════════════════════════
+// ── YouTube ───────────────────────────────
 app.post("/api/youtube", dlLimiter, async (req, res) => {
   const { url } = req.body;
   if (!url || typeof url !== "string")
     return res.status(400).json({ success: false, error: "Missing URL." });
 
   if (!isValidYouTubeUrl(url.trim()))
-    return res
-      .status(400)
-      .json({ success: false, error: "Invalid YouTube URL." });
+    return res.status(400).json({ success: false, error: "Invalid YouTube URL." });
 
   const videoId = extractYouTubeId(url.trim());
   if (!videoId)
-    return res
-      .status(400)
-      .json({ success: false, error: "Could not extract video ID." });
+    return res.status(400).json({ success: false, error: "Could not extract video ID." });
 
   try {
     const YT_HOST =
@@ -347,33 +324,21 @@ app.post("/api/youtube", dlLimiter, async (req, res) => {
 
     if (!r.ok) {
       if (r.status === 404)
-        return res
-          .status(404)
-          .json({ success: false, error: "Video not found." });
+        return res.status(404).json({ success: false, error: "Video not found." });
       if (r.status === 429)
-        return res
-          .status(429)
-          .json({ success: false, error: "Rate limit reached." });
-      return res
-        .status(502)
-        .json({ success: false, error: `API error (${r.status}).` });
+        return res.status(429).json({ success: false, error: "Rate limit reached." });
+      return res.status(502).json({ success: false, error: `API error (${r.status}).` });
     }
 
     const data = JSON.parse(rawText);
     if (data.status !== "ok")
-      return res
-        .status(422)
-        .json({ success: false, error: data.message || "Video unavailable." });
+      return res.status(422).json({ success: false, error: data.message || "Video unavailable." });
 
     const normalized = normalizeYouTube(data);
     if (!normalized)
-      return res
-        .status(422)
-        .json({ success: false, error: "Could not extract links." });
+      return res.status(422).json({ success: false, error: "Could not extract links." });
 
-    console.log(
-      `[YT] ✅ "${normalized.caption.slice(0, 40)}" — ${normalized.downloads.length} formats`,
-    );
+    console.log(`[YT] ✅ "${normalized.caption.slice(0, 40)}" — ${normalized.downloads.length} formats`);
     return res.status(200).json({ success: true, ...normalized });
   } catch (err) {
     console.error("[YT Error]", err.message);
@@ -381,24 +346,17 @@ app.post("/api/youtube", dlLimiter, async (req, res) => {
   }
 });
 
-// ══════════════════════════════════════════
-//  PROXY — streams media directly to browser
-//  Works for both Instagram CDN and YouTube
-//  GET /api/proxy?url=...&filename=...
-// ══════════════════════════════════════════
+// ── Proxy ─────────────────────────────────
 app.get("/api/proxy", async (req, res) => {
   const { url, filename } = req.query;
   if (!url) return res.status(400).json({ error: "Missing url" });
 
   try {
     const decoded = decodeURIComponent(url);
-
-    // Choose headers based on source
     const isYouTube = decoded.includes("googlevideo.com");
     const headers = isYouTube
       ? {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           Accept: "*/*",
           "Accept-Language": "en-US,en;q=0.9",
           "Accept-Encoding": "identity",
@@ -411,8 +369,7 @@ app.get("/api/proxy", async (req, res) => {
           ...(req.headers["range"] ? { Range: req.headers["range"] } : {}),
         }
       : {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           Accept: "*/*",
           "Accept-Encoding": "identity",
         };
@@ -421,21 +378,14 @@ app.get("/api/proxy", async (req, res) => {
     console.log(`[Proxy] ${isYouTube ? "YT" : "IG"} → ${response.status}`);
 
     if (!response.ok && response.status !== 206) {
-      return res
-        .status(response.status)
-        .json({ error: `Upstream returned ${response.status}` });
+      return res.status(response.status).json({ error: `Upstream returned ${response.status}` });
     }
 
-    const ct =
-      response.headers.get("content-type") ||
-      (isYouTube ? "video/mp4" : "application/octet-stream");
+    const ct = response.headers.get("content-type") || (isYouTube ? "video/mp4" : "application/octet-stream");
     const cl = response.headers.get("content-length");
     const cr = response.headers.get("content-range");
 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${filename || "grabreel.mp4"}"`,
-    );
+    res.setHeader("Content-Disposition", `attachment; filename="${filename || "grabreel.mp4"}"`);
     res.setHeader("Content-Type", ct);
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "no-store");
@@ -454,23 +404,15 @@ app.get("/api/proxy", async (req, res) => {
   }
 });
 
-// ✅ Specific routes FIRST
-app.get('/', (req, res) => {
-  res.json({ status: 'GrabReel backend is running 🚀' });
-});
-
-// ── 404 & errors ──────────────────────────
+// ── 404 & Error handlers (always last) ────
 app.use((req, res) =>
-  res
-    .status(404)
-    .json({ success: false, error: `${req.method} ${req.path} not found.` }),
+  res.status(404).json({ success: false, error: `${req.method} ${req.path} not found.` }),
 );
 app.use((err, req, res, next) => {
   if (err.message?.startsWith("CORS"))
     return res.status(403).json({ success: false, error: err.message });
   res.status(500).json({ success: false, error: "Internal server error." });
 });
-
 
 app.listen(PORT, () => {
   console.log(`\nGrabReel server → http://localhost:${PORT}`);

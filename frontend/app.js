@@ -316,11 +316,11 @@ function applyMode(isLight) {
   if (isLight) {
     body.classList.add('light-mode');
     if (icon)  icon.textContent  = '☀️';
-    if (label) label.textContent = 'DAY MODE';
+    if (label) label.textContent = 'LIGHT MODE';
   } else {
     body.classList.remove('light-mode');
     if (icon)  icon.textContent  = '🌙';
-    if (label) label.textContent = 'NIGHT MODE';
+    if (label) label.textContent = 'DARK MODE';
   }
 
   

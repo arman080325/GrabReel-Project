@@ -22,7 +22,7 @@
   --muted:   #555;
   --muted2:  #888;
   --shadow:  rgba(0,0,0,0.5);
-  --mode-label: "🌙 NIGHT MODE";
+  --mode-label: "🌙 DARK MODE";
 }
 
 /* ── LIGHT MODE (applied via JS based on time) ── */
@@ -36,7 +36,7 @@ body.light-mode {
   --muted:   #9a9690;
   --muted2:  #6a6660;
   --shadow:  rgba(0,0,0,0.12);
-  --mode-label: "☀️ DAY MODE";
+  --mode-label: "☀️ LIGHT MODE";
 }
 
 html { scroll-behavior: smooth; }
