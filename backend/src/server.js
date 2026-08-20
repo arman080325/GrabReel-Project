@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const fetch = require("node-fetch");
+const ytdl = require("@distube/ytdl-core");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -138,38 +139,30 @@ function normalizeInstagram(apiData, urlType) {
   };
 }
 
-// ── YTStream API normalizer ───────────────
-// Response has:
-//   formats[]         → muxed streams (video+audio), use these first
-//   adaptiveFormats[] → video-only or audio-only streams
-//   thumbnail[]       → array of {url, width, height}
-//   lengthSeconds     → string
-//   title             → string
-function normalizeYouTube(apiData) {
-  if (apiData.status !== "OK") return null;
-
-  const title = apiData.title || "YouTube Video";
-  const duration = parseInt(apiData.lengthSeconds) || null;
+// ── ytdl-core API normalizer ───────────────
+function normalizeYouTube(info) {
+  const { videoDetails, formats } = info;
+  
+  const title = videoDetails.title || "YouTube Video";
+  const duration = parseInt(videoDetails.lengthSeconds) || null;
 
   // Pick best thumbnail (highest width)
-  const thumbs = Array.isArray(apiData.thumbnail) ? apiData.thumbnail : [];
+  const thumbs = Array.isArray(videoDetails.thumbnails) ? videoDetails.thumbnails : [];
   const thumbnail = thumbs.length
     ? thumbs.sort((a, b) => b.width - a.width)[0].url
     : "";
 
-  const formats = apiData.formats || [];
-  const adaptive = apiData.adaptiveFormats || [];
   const downloads = [];
 
   // ── Muxed streams (have both video + audio) ──
   // itag 18 = 360p, itag 22 = 720p
-  const muxedPriority = [22, 18];
-  for (const itag of muxedPriority) {
-    const f = formats.find((r) => r.itag === itag && r.mimeType?.startsWith("video/mp4"));
-    if (f) {
+  const muxedFormats = formats.filter(f => f.hasVideo && f.hasAudio);
+  
+  for (const f of muxedFormats) {
+    if (f.qualityLabel) {
       downloads.push({
-        quality: f.qualityLabel || f.quality,
-        label: `${f.qualityLabel || f.quality} · MP4 · With Audio`,
+        quality: f.qualityLabel,
+        label: `${f.qualityLabel} · MP4 · With Audio`,
         url: f.url,
         audioUrl: null,
         ext: "mp4",
@@ -179,23 +172,23 @@ function normalizeYouTube(apiData) {
     }
   }
 
-  // ── Best audio stream from adaptiveFormats ──
-  const audioStream =
-    adaptive.find((r) => r.mimeType?.startsWith("audio/mp4") && r.audioQuality === "AUDIO_QUALITY_MEDIUM") ||
-    adaptive.find((r) => r.mimeType?.startsWith("audio/mp4")) ||
-    adaptive.find((r) => r.mimeType?.startsWith("audio/webm"));
+  // ── Best audio stream ──
+  const audioFormats = formats.filter(f => !f.hasVideo && f.hasAudio).sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
+  const audioStream = audioFormats[0];
 
-  // ── Video-only adaptive streams (pair with audio) ──
+  // ── Video-only streams (pair with audio) ──
+  const videoOnly = formats.filter(f => f.hasVideo && !f.hasAudio);
   const wantedLabels = ["1080p", "720p", "480p", "360p", "240p", "144p"];
   const seen = new Set(downloads.map((d) => d.quality));
 
   for (const label of wantedLabels) {
     if (seen.has(label)) continue;
-    // Prefer mp4 (avc1) over webm
-    const f =
-      adaptive.find((r) => r.qualityLabel === label && r.mimeType?.includes("video/mp4") && r.mimeType?.includes("avc1")) ||
-      adaptive.find((r) => r.qualityLabel === label && r.mimeType?.startsWith("video/mp4")) ||
-      adaptive.find((r) => r.qualityLabel === label && r.mimeType?.startsWith("video/webm"));
+    
+    // Prefer mp4
+    const f = 
+      videoOnly.find((r) => r.qualityLabel === label && r.container === "mp4") ||
+      videoOnly.find((r) => r.qualityLabel === label);
+      
     if (f) {
       seen.add(label);
       downloads.push({
@@ -203,7 +196,7 @@ function normalizeYouTube(apiData) {
         label: `${label} · Video only (download Audio separately)`,
         url: f.url,
         audioUrl: audioStream ? audioStream.url : null,
-        ext: "mp4",
+        ext: f.container || "mp4",
         hasAudio: false,
         type: "video",
       });
@@ -213,11 +206,11 @@ function normalizeYouTube(apiData) {
   // ── Audio only ──
   if (audioStream) {
     downloads.push({
-      quality: "M4A",
-      label: "Audio Only · M4A",
+      quality: "Audio",
+      label: `Audio Only · ${audioStream.container || 'm4a'} (${audioStream.audioBitrate || 128}kbps)`,
       url: audioStream.url,
       audioUrl: null,
-      ext: audioStream.mimeType?.startsWith("audio/mp4") ? "m4a" : "webm",
+      ext: audioStream.container || "m4a",
       hasAudio: true,
       type: "audio",
     });
@@ -231,7 +224,7 @@ function normalizeYouTube(apiData) {
     thumbnail,
     caption: title,
     duration,
-    likeCount: 0,
+    likeCount: videoDetails.likes || 0,
     downloads,
   };
 }
@@ -303,7 +296,7 @@ app.post("/api/download", dlLimiter, async (req, res) => {
   }
 });
 
-// ── YouTube (YTStream API) ─────────────────
+// ── YouTube (ytdl-core) ─────────────────
 app.post("/api/youtube", dlLimiter, async (req, res) => {
   const { url } = req.body;
   if (!url || typeof url !== "string")
@@ -312,36 +305,13 @@ app.post("/api/youtube", dlLimiter, async (req, res) => {
   if (!isValidYouTubeUrl(url.trim()))
     return res.status(400).json({ success: false, error: "Invalid YouTube URL." });
 
-  const videoId = extractYouTubeId(url.trim());
-  if (!videoId)
-    return res.status(400).json({ success: false, error: "Could not extract video ID." });
-
   try {
-    const YT_HOST = process.env.RAPIDAPI_YT_HOST || "ytstream-download-youtube-videos.p.rapidapi.com";
-    const apiUrl = `https://${YT_HOST}/dl?id=${videoId}`;
-    console.log(`\n[YT] ID: ${videoId}`);
-
-    const r = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "x-rapidapi-key": process.env.RAPIDAPI_KEY,
-        "x-rapidapi-host": YT_HOST,
-      },
-    });
-    const rawText = await r.text();
-    console.log(`[YT] ${r.status} | ${rawText.slice(0, 80)}`);
-
-    if (!r.ok) {
-      if (r.status === 404) return res.status(404).json({ success: false, error: "Video not found." });
-      if (r.status === 429) return res.status(429).json({ success: false, error: "Rate limit reached." });
-      return res.status(502).json({ success: false, error: `API error (${r.status}).` });
-    }
-
-    const data = JSON.parse(rawText);
-    if (data.status !== "OK")
-      return res.status(422).json({ success: false, error: "Video unavailable." });
-
-    const normalized = normalizeYouTube(data);
+    console.log(`\n[YT] Fetching info for: ${url}`);
+    
+    // Use ytdl-core to get video info
+    const info = await ytdl.getInfo(url.trim());
+    
+    const normalized = normalizeYouTube(info);
     if (!normalized)
       return res.status(422).json({ success: false, error: "Could not extract links." });
 
@@ -349,7 +319,10 @@ app.post("/api/youtube", dlLimiter, async (req, res) => {
     return res.status(200).json({ success: true, ...normalized });
   } catch (err) {
     console.error("[YT Error]", err.message);
-    return res.status(500).json({ success: false, error: "Server error." });
+    if (err.message.includes("Video unavailable")) {
+        return res.status(404).json({ success: false, error: "Video unavailable or private." });
+    }
+    return res.status(500).json({ success: false, error: "Server error or video unavailable." });
   }
 });
 

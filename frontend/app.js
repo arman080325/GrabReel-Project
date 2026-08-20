@@ -216,36 +216,25 @@ async function triggerDownload(encodedVideoUrl, encodedAudioUrl, ext, index, pla
     const proxyUrl = `${BACKEND_URL}/api/proxy?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(filename)}`;
 
     try {
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('proxy failed');
-
-      const blob    = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = blobUrl; a.download = filename;
-      document.body.appendChild(a); a.click();
+      a.href = proxyUrl;
+      document.body.appendChild(a); 
+      a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-      showToast('Download complete! 🎉');
+      showToast('Download started! 🎉');
 
       // If there's a separate audio stream, download it too
       if (audioUrl && ext === 'mp4') {
         setTimeout(() => {
           const audioFilename = `grabreel_${Date.now()}_audio.m4a`;
           const audioProxyUrl = `${BACKEND_URL}/api/proxy?url=${encodeURIComponent(audioUrl)}&filename=${encodeURIComponent(audioFilename)}`;
-          fetch(audioProxyUrl)
-            .then(r => r.blob())
-            .then(blob => {
-              const bUrl = URL.createObjectURL(blob);
-              const a2 = document.createElement('a');
-              a2.href = bUrl; a2.download = audioFilename;
-              document.body.appendChild(a2); a2.click();
-              document.body.removeChild(a2);
-              URL.revokeObjectURL(bUrl);
-              showToast('Audio track also downloaded! Merge with any video editor.');
-            })
-            .catch(() => showToast('Video downloaded! Audio download failed.'));
-        }, 1000);
+          const a2 = document.createElement('a');
+          a2.href = audioProxyUrl;
+          document.body.appendChild(a2); 
+          a2.click();
+          document.body.removeChild(a2);
+          showToast('Audio track also downloading! Merge with any video editor.');
+        }, 1500);
       }
     } catch {
       // Final fallback — open in new tab
@@ -255,21 +244,18 @@ async function triggerDownload(encodedVideoUrl, encodedAudioUrl, ext, index, pla
     return;
   }
 
-  // ── Instagram — direct blob ──
+  // ── Instagram — use proxy for direct download to avoid CORS/Blob issues ──
   try {
-    const response = await fetch(videoUrl);
-    if (!response.ok) throw new Error('fetch failed');
-    const blob    = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
+    const proxyUrl = `${BACKEND_URL}/api/proxy?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(filename)}`;
     const a = document.createElement('a');
-    a.href = blobUrl; a.download = filename;
-    document.body.appendChild(a); a.click();
+    a.href = proxyUrl;
+    document.body.appendChild(a); 
+    a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-    showToast('Download complete! 🎉');
+    showToast('Download started! 🎉');
   } catch {
     const a = document.createElement('a');
-    a.href = videoUrl; a.download = filename; a.target = '_blank';
+    a.href = videoUrl; a.target = '_blank';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     showToast('Opened in new tab — Save As to download');
